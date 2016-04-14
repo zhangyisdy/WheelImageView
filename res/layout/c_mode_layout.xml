@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/c_mode_launcher"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" >
+
+    <ImageView
+        android:id="@+id/icon_higher_small"
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:scaleType="matrix"
+        android:src="@drawable/c_mode_calling_higher_small" />
+
+    <ImageView
+        android:id="@+id/icon_higher_medium"
+        android:layout_width="230dp"
+        android:layout_height="78dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"
+        android:scaleType="matrix"
+        android:src="@drawable/c_mode_map_lower_medium" />
+
+    <ImageView
+        android:id="@+id/icon_large"
+        android:layout_width="330dp"
+        android:layout_height="200dp"
+        android:layout_below="@+id/icon_higher_small"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="12dp"
+        android:scaleType="matrix"
+        android:src="@drawable/c_mode_wechat_large" />
+
+    <ImageView
+        android:id="@+id/icon_lower_medium"
+        android:layout_width="230dp"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="208dp"
+        android:scaleType="matrix"
+        android:src="@drawable/c_mode_music_lower_medium" />
+
+    <ImageView
+        android:id="@+id/icon_lower_small"
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/icon_large"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"
+        android:src="@drawable/c_mode_photo_lower_small" />
+
+    <TextView
+        android:id="@+id/icon_desc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/icon_large"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="35dp"
+        android:text="WeChat"
+        android:textColor="@android:color/white"
+        android:textSize="18sp" />
+
+</RelativeLayout>
