@@ -158,6 +158,7 @@ public class WheelLayout extends RelativeLayout {
 		public void onStarted() {
 			isScrollingPerformed = true;
 			mIsAddIndex = 0;
+			mIsSubIndex = 0;
 		}
 
 		public void onScroll(int distance) {
@@ -183,10 +184,10 @@ public class WheelLayout extends RelativeLayout {
 				isScrollingPerformed = false;
 			}
 			// slid finish to replace image
-			if (mIsAddIndex <= 0) {
+			if (mIsAddIndex == 0 && mode == 0) {
 				addIndex();
-			} else {
-				//subIndex();
+			}else if(mIsAddIndex == 0 && mode == 1){
+				subIndex();
 			}
 			replaceImage();
 			invalidate();
@@ -202,6 +203,7 @@ public class WheelLayout extends RelativeLayout {
 	private int mDownX;
 	private int mDownY;
 	private int mIsAddIndex = 0;
+	private int mIsSubIndex = 0;
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		// TODO Auto-generated method stub
@@ -546,7 +548,7 @@ public class WheelLayout extends RelativeLayout {
 																		  mIconLowerMudium.getRight(), mIconLowerMudium.getBottom()+mDesc/6);
 				mIconLowerMudium.setImageMatrix(mLowerMudiumMatrx);
 			}else{
-				mIsAddIndex++;
+				mIsAddIndex--;
 				subIndex();
 				replaceImage();
 			}
