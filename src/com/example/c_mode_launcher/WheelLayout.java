@@ -157,6 +157,7 @@ public class WheelLayout extends RelativeLayout {
 		@SuppressLint("NewApi")
 		public void onStarted() {
 			isScrollingPerformed = true;
+			mIsAddIndex = 0;
 		}
 
 		public void onScroll(int distance) {
@@ -182,10 +183,10 @@ public class WheelLayout extends RelativeLayout {
 				isScrollingPerformed = false;
 			}
 			// slid finish to replace image
-			if (mode == 0) {
+			if (mIsAddIndex <= 0) {
 				addIndex();
 			} else {
-				subIndex();
+				//subIndex();
 			}
 			replaceImage();
 			invalidate();
@@ -200,6 +201,7 @@ public class WheelLayout extends RelativeLayout {
 
 	private int mDownX;
 	private int mDownY;
+	private int mIsAddIndex = 0;
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		// TODO Auto-generated method stub
@@ -458,7 +460,7 @@ public class WheelLayout extends RelativeLayout {
 	}
 
 	/**
-	 *  set icoc home position
+	 *  set icon home position
 	 */
 	private void setIconOriginPositon(){
 		mIconLargeTop = mIconLarge.getTop();
@@ -485,100 +487,113 @@ public class WheelLayout extends RelativeLayout {
 			mDesc -= 1;	//向上滑动
 		}
 
-		if(mScaleX > 0.9f){
+		if(mScaleX > 0.84f){
 			// 设置放大 缩小比率 最小缩小为90%
-			mScaleX -= 0.01f;
-			mScaleY -= 0.03f;
+			mScaleX -= 0.01/2f;
+			mScaleY -= 0.03/2f;
 			//large icon reduce
 			mLargeScaleMatrix.setScale(mScaleX, mScaleY,
 					mIconLarge.getWidth() / 2,
 					mIconLarge.getHeight() / 2);
-			mIconLarge.layout(mIconLarge.getLeft(),
-					mIconLarge.getTop()+mDesc, mIconLarge.getRight(), mIconLarge.getBottom()+mDesc);
+			if(move < 0){
+				mIconLarge.layout(mIconLarge.getLeft(),
+						mIconLarge.getTop()+mDesc/3, mIconLarge.getRight(), mIconLarge.getBottom()+mDesc/3);
+			}else{
+				mIconLarge.layout(mIconLarge.getLeft(),
+						mIconLarge.getTop()+mDesc/4, mIconLarge.getRight(), mIconLarge.getBottom()+mDesc/4);
+			}
 			mIconLarge.setImageMatrix(mLargeScaleMatrix);
 		}
 
 		if(move > 0){
 			// 向下滑动
-			if(mScaleXEnlarge < 1.1f){
+			if(mScaleXEnlarge < 1.16f){
 				// 设置放大 缩小比率 最小缩小为90% 最大放大为110%
-				mScaleXEnlarge += 0.01f;
-				mScaleYEnlarge += 0.05f;
-				mScaleXReduce -= 0.01f;
-				mScaleYReduce -= 0.02f;
+				mScaleXEnlarge += 0.01/2f;
+				mScaleYEnlarge += 0.05/2f;
+				mScaleXReduce -= 0.01/2f;
+				mScaleYReduce -= 0.02/2f;
 
 				// higher small icon enlarge
 				mHigherSmallMatrix.setScale(mScaleXEnlarge, mScaleYEnlarge,
 						mIconHigherSmall.getWidth() / 2,
 						mIconHigherSmall.getHeight() / 2);
-				mIconHigherSmall.layout(mIconHigherSmall.getLeft(),mIconHigherSmall.getTop()+mDesc/2, 
-																	mIconHigherSmall.getRight(), mIconHigherSmall.getBottom()+mDesc/2);
+				mIconHigherSmall.layout(mIconHigherSmall.getLeft(),mIconHigherSmall.getTop()+mDesc/6, 
+																	mIconHigherSmall.getRight(), mIconHigherSmall.getBottom()+mDesc/6);
 				mIconHigherSmall.setImageMatrix(mHigherSmallMatrix);
 
 				// higher mudium icon enlarge
 				mHigherMudiumMatrix.setScale(mScaleXEnlarge, mScaleYEnlarge,
 						mIconHigherMudium.getWidth() / 2,
 						mIconHigherMudium.getHeight() / 2);
-				mIconHigherMudium.layout(mIconHigherMudium.getLeft(),mIconHigherMudium.getTop()+mDesc, 
-																		  mIconHigherMudium.getRight(), mIconHigherMudium.getBottom()+mDesc);
+				mIconHigherMudium.layout(mIconHigherMudium.getLeft(),mIconHigherMudium.getTop()+mDesc/4, 
+																		  mIconHigherMudium.getRight(), mIconHigherMudium.getBottom()+mDesc/3);
 				mIconHigherMudium.setImageMatrix(mHigherMudiumMatrix);
 
 				//lower small icon reduce
 				mLowerSmallMatrix.setScale(mScaleXReduce, mScaleYReduce,
 						mIconLowerSmall.getWidth() / 2,
 						mIconLowerSmall.getHeight() / 2);
-				mIconLowerSmall.layout(mIconLowerSmall.getLeft(),mIconLowerSmall.getTop()+mDesc/2, 
-						mIconLowerSmall.getRight(), mIconLowerSmall.getBottom()+mDesc/2);
+				mIconLowerSmall.layout(mIconLowerSmall.getLeft(),mIconLowerSmall.getTop()+mDesc/6, 
+						mIconLowerSmall.getRight(), mIconLowerSmall.getBottom()+mDesc/6);
 				mIconLowerSmall.setImageMatrix(mLowerSmallMatrix);
 				
 				//lower mudium icon reduce
 				mLowerMudiumMatrx.setScale(mScaleXReduce, mScaleYReduce,
 						mIconLowerMudium.getWidth() / 2,
 						mIconLowerMudium.getHeight() / 2);
-				mIconLowerMudium.layout(mIconLowerMudium.getLeft(),mIconLowerMudium.getTop()+mDesc/2, 
-																		  mIconLowerMudium.getRight(), mIconLowerMudium.getBottom()+mDesc/2);
+				mIconLowerMudium.layout(mIconLowerMudium.getLeft(),mIconLowerMudium.getTop()+mDesc/6, 
+																		  mIconLowerMudium.getRight(), mIconLowerMudium.getBottom()+mDesc/6);
 				mIconLowerMudium.setImageMatrix(mLowerMudiumMatrx);
+			}else{
+				mIsAddIndex++;
+				subIndex();
+				replaceImage();
 			}
 		}else{
 			// 向上滑动
-			if(mScaleXEnlarge < 1.1f){
+			if(mScaleXEnlarge < 1.16f){
 				// 设置放大 缩小比率 最小缩小为90% 最大放大为110%
-				mScaleXEnlarge += 0.01f;
-				mScaleYEnlarge += 0.05f;
-				mScaleXReduce -= 0.01f;
-				mScaleYReduce -= 0.02f;
-
-				// lower mudium icon enlarge
+				mScaleXEnlarge += 0.01/2f;
+				mScaleYEnlarge += 0.05/2f;
+				mScaleXReduce -= 0.01/2f;
+				mScaleYReduce -= 0.02/2f;
+								
+				// lower medium icon enlarge
 				mLowerMudiumMatrx.setScale(mScaleXEnlarge, mScaleYEnlarge,
 						mIconLowerMudium.getWidth() / 2,
 						mIconLowerMudium.getHeight() / 2);
-				mIconLowerMudium.layout(mIconLowerMudium.getLeft(),mIconLowerMudium.getTop()+mDesc, 
-																		mIconLowerMudium.getRight(), mIconLowerMudium.getBottom()+mDesc);
+				mIconLowerMudium.layout(mIconLowerMudium.getLeft(),mIconLowerMudium.getTop()+(int)(mDesc/3), 
+																		mIconLowerMudium.getRight(), mIconLowerMudium.getBottom()+(int)(mDesc/4));
 				mIconLowerMudium.setImageMatrix(mLowerMudiumMatrx);
 
 				//lower small icon enlarge
 				mLowerSmallMatrix.setScale(mScaleXEnlarge, mScaleYEnlarge,
 						mIconHigherSmall.getWidth() / 2,
 						mIconHigherSmall.getHeight() / 2);
-				mIconLowerSmall.layout(mIconLowerSmall.getLeft(),mIconLowerSmall.getTop()+mDesc/2, 
-																   mIconLowerSmall.getRight(), mIconLowerSmall.getBottom()+mDesc/2);
+				mIconLowerSmall.layout(mIconLowerSmall.getLeft(),mIconLowerSmall.getTop()+mDesc/6, 
+																   mIconLowerSmall.getRight(), mIconLowerSmall.getBottom()+mDesc/6);
 				mIconLowerSmall.setImageMatrix(mLowerSmallMatrix);
 
 				//higher small icon reduce
 				mHigherSmallMatrix.setScale(mScaleXReduce, mScaleYReduce,
 						mIconHigherSmall.getWidth() / 2,
 						mIconHigherSmall.getHeight() / 2);
-				mIconHigherSmall.layout(mIconHigherSmall.getLeft(),mIconHigherSmall.getTop()+mDesc/2, 
-																	mIconHigherSmall.getRight(), mIconHigherSmall.getBottom()+mDesc/2);
+				mIconHigherSmall.layout(mIconHigherSmall.getLeft(),mIconHigherSmall.getTop()+mDesc/6, 
+																	mIconHigherSmall.getRight(), mIconHigherSmall.getBottom()+mDesc/6);
 				mIconHigherSmall.setImageMatrix(mHigherSmallMatrix);	
 
-				//higher mudium icon reduce
+				//higher medium icon reduce
 				mHigherMudiumMatrix.setScale(mScaleXReduce, mScaleYReduce,
 						mIconHigherMudium.getWidth() / 2,
 						mIconHigherMudium.getHeight() / 2);
-				mIconHigherMudium.layout(mIconHigherMudium.getLeft(),mIconHigherMudium.getTop()+mDesc/2, 
-																		  mIconHigherMudium.getRight(), mIconHigherMudium.getBottom()+mDesc/2);
+				mIconHigherMudium.layout(mIconHigherMudium.getLeft(),mIconHigherMudium.getTop()+mDesc/6, 
+																		  mIconHigherMudium.getRight(), mIconHigherMudium.getBottom()+mDesc/6);
 				mIconHigherMudium.setImageMatrix(mHigherMudiumMatrix);
+			}else{
+				mIsAddIndex++;
+				addIndex();
+				replaceImage();
 			}
 		}
 	}
