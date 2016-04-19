@@ -1,5 +1,8 @@
 package com.example.c_mode_launcher;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.animation.ValueAnimator.AnimatorUpdateListener;
@@ -10,6 +13,8 @@ import android.graphics.Camera;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.os.Handler;
+import android.text.format.Time;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -117,7 +122,35 @@ public class WheelLayout extends RelativeLayout {
 	private float mScaleYReduce = 1;
 	private int mDesc = 0;
 	
-	private final int MAX_FING_BOUND = 60;
+	// 旋转控制系数
+	/* x扩展比率发生图片替换 */
+	private final static float  ROTATION_RATIO =  0.17f;
+	/* 图片 X 放大比例 */
+	private final static float ENLARGE_X = 0.005f;
+	/* 中间图片 Y 缩小比例 */
+	private final static float REDUCE_MIDDLE_Y = 0.0175f;
+	/* 图片 Y 放大比例 */
+	private final static float ENLARGE_Y = 0.025f;
+	/* 上下小图片 Y 缩x小比例 */
+	private final static float REDUCE_EDGE_Y = 0.01f;
+ 
+	private final int MAX_FING_BOUND = 50;
+	
+	/* 时间任务旋转参数 */
+	private MyTimerTask mTask;
+	private Timer mTimer = new Timer();
+	private boolean mStartWheel = true;
+	private boolean mTouchUp = false;
+	private final static float TIME_TASK_WHEEL_RATIO = 1.07f;
+	
+	@SuppressLint("HandlerLeak")
+	private Handler updateHandler = new Handler(){
+		public void handleMessage(android.os.Message msg) {
+			if(mStartWheel){
+				wheelImage(sum);
+			}
+		};
+	};
 
 	public WheelLayout(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -150,22 +183,34 @@ public class WheelLayout extends RelativeLayout {
 
 	int scrollOffset = 0;
 
-	
 	// Scrolling listener
 	WheelScroller.ScrollingListener scrollingListener = new WheelScroller.ScrollingListener() {
 
 		@SuppressLint("NewApi")
 		public void onStarted() {
 			isScrollingPerformed = true;
-			mIsAddIndex = 0;
 		}
 
 		public void onScroll(int distance) {
 			scrollingOffset += distance;
 
-			// abandon fing scroll
-			if(Math.abs(distance) < MAX_FING_BOUND){
-				rotateImage(distance) ;
+			if (Math.abs(distance) < MAX_FING_BOUND && !mTouchUp) {
+				wheelImage(distance);
+			} else if (Math.abs(distance) > MAX_FING_BOUND) {
+				int i = 8;
+				if (distance < 0) {
+					while (distance < 0) {
+						wheelImage(distance);
+						distance = (distance + i);
+						i = i * 2;
+					}
+				} else {
+					while (distance > 0) {
+						wheelImage(distance);
+						distance = (distance - i);
+						i = i * 2;
+					}
+				}
 			}
 			
 			int height = 10;
@@ -184,13 +229,6 @@ public class WheelLayout extends RelativeLayout {
 			if (isScrollingPerformed) {
 				isScrollingPerformed = false;
 			}
-			// slide finish to replace image
-			if (mIsAddIndex == 0 && mode == 0) {
-				addIndex();
-			}else if(mIsAddIndex == 0 && mode == 1){
-				subIndex();
-			}
-			replaceImage();
 			invalidate();
 		}
 
@@ -203,7 +241,6 @@ public class WheelLayout extends RelativeLayout {
 
 	private int mDownX;
 	private int mDownY;
-	private int mIsAddIndex = 0;
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		switch (event.getAction()) {
@@ -212,6 +249,7 @@ public class WheelLayout extends RelativeLayout {
 				mDownY = (int) event.getY();
 				setIconOriginPositon();
 				replaceImage();
+				mTouchUp = false;
 				break;
 			case MotionEvent.ACTION_MOVE:
 				break;
@@ -219,12 +257,31 @@ public class WheelLayout extends RelativeLayout {
 				int offsetY = (mDownY - (int) event.getY());
 				int offsetX = (mDownX - (int) event.getX());
 				mDownY = (int) event.getY();
+				
 				// click icon
 				if (Math.abs(offsetX) < 5 && Math.abs(offsetY) < 5) {
 					onIconClick(CLICKED_IMAGE_TOUCH);
 				}
 				CLICKED_IMAGE_TOUCH = -1;
-				replaceImage();
+				
+				/* 当旋转到中间位置时 开始时间任务，自动旋转 */
+				if(mScaleXEnlarge >= TIME_TASK_WHEEL_RATIO){
+					if (mTask != null) {
+						mTask.cancel();
+						mTask = null;
+					}
+					mTask = new MyTimerTask(updateHandler );
+					mStartWheel = true;
+					mTimer.schedule(mTask, 0, 10);
+				}else{
+					if (mTask != null) {
+						mTask.cancel();
+						mTask = null;
+					}
+					replaceImage();
+				}
+				
+				mTouchUp = true;
 				// abandon event to sroller
 				if (Math.abs(offsetY) < 50) {
 					return true;
@@ -301,25 +358,26 @@ public class WheelLayout extends RelativeLayout {
 
 	/**
 	 * wheel image
+	 * @param move distance and direction 
+	 * 					move > 0 向下滑动 move<0 向上滑动
 	 */
-	int lastDesc = 0;
-	private void rotateImage(int move) {
+	int sum = 0;
+	private void wheelImage(int move) {
+		sum += mDesc;
 		if(move > 0){
 			mDesc +=1;	//向下滑动
 		}else{
 			mDesc -= 1;	//向上滑动
 		}
-		Log.d("zhangyi","mDesc is:"+mDesc+" move is:"+move+"    lastDesc is:"+lastDesc);
-		if(mScaleX > 0.83f){
-			// 设置放大 缩小比率 最小缩小为90%
-			mScaleX -= 0.01/2f;
-			mScaleY -= 0.035/2f;
+		if(mScaleX > (1-ROTATION_RATIO)){
+			mScaleX -= ENLARGE_X;
+			mScaleY -= REDUCE_MIDDLE_Y;
 			//large icon reduce
-			mLargeScaleMatrix.setScale((float)(mScaleX*0.9), mScaleY,
+			mLargeScaleMatrix.setScale((float)(mScaleX*0.95), mScaleY,
 																	mIconLarge.getWidth() / 2,
 																	mIconLarge.getHeight() / 2);
 
-				mIconLarge.layout(mIconLarge.getLeft(),
+			mIconLarge.layout(mIconLarge.getLeft(),
 														mIconLarge.getTop()+mDesc/4,
 														mIconLarge.getRight(),
 														mIconLarge.getBottom()+mDesc/4);
@@ -328,13 +386,11 @@ public class WheelLayout extends RelativeLayout {
 
 		if(move > 0){
 			// 向下滑动
-			if(mScaleXEnlarge < 1.17f){
-				// 设置放大 缩小比率 最小缩小为90% 最大放大为110%
-					mScaleXEnlarge += 0.01/2f;
-					mScaleYEnlarge += 0.05/2f;
-					mScaleXReduce -= 0.01/2f;
-					mScaleYReduce -= 0.02/2f;
-					lastDesc = mDesc;
+			if(mScaleXEnlarge < (1+ROTATION_RATIO)){
+					mScaleXEnlarge += ENLARGE_X;
+					mScaleYEnlarge += ENLARGE_Y;
+					mScaleXReduce -= ENLARGE_X;
+					mScaleYReduce -= REDUCE_EDGE_Y;
 
 				// higher small icon enlarge
 				mHigherSmallMatrix.setScale(mScaleXEnlarge, mScaleYEnlarge,
@@ -345,7 +401,7 @@ public class WheelLayout extends RelativeLayout {
 				mIconHigherSmall.setImageMatrix(mHigherSmallMatrix);
 
 				// higher medium icon enlarge
-				mHigherMudiumMatrix.setScale(mScaleXEnlarge, (float)(mScaleYEnlarge*1.5),
+				mHigherMudiumMatrix.setScale(mScaleXEnlarge, (float)(mScaleYEnlarge*1.3),
 																				 mIconHigherMudium.getWidth() / 2,
 																				 mIconHigherMudium.getHeight() / 2-Math.abs(mDesc));
 				mIconHigherMudium.layout(mIconHigherMudium.getLeft(),mIconHigherMudium.getTop()+(int)(mDesc/4.5), 
@@ -357,9 +413,9 @@ public class WheelLayout extends RelativeLayout {
 																		  mIconLowerSmall.getWidth() / 2,
 																		  mIconLowerSmall.getHeight() / 2);
 				mIconLowerSmall.layout(mIconLowerSmall.getLeft(),mIconLowerSmall.getTop()+mDesc/8, 
-						mIconLowerSmall.getRight(), mIconLowerSmall.getBottom()+mDesc/8);
+																	mIconLowerSmall.getRight(), mIconLowerSmall.getBottom()+mDesc/8);
 				mIconLowerSmall.setImageMatrix(mLowerSmallMatrix);
-				
+
 				//lower medium icon reduce
 				mLowerMudiumMatrx.setScale(mScaleXReduce, mScaleYReduce,
 																				mIconLowerMudium.getWidth() / 2,
@@ -368,27 +424,19 @@ public class WheelLayout extends RelativeLayout {
 																		  mIconLowerMudium.getRight(), mIconLowerMudium.getBottom()+mDesc/8);
 				mIconLowerMudium.setImageMatrix(mLowerMudiumMatrx);
 			}else{
-				mIsAddIndex--;
 				subIndex();
 				replaceImage();
 			}
 		}else{
 			// 向上滑动
-			if(mScaleXEnlarge < 1.17f){
-				// 设置放大 缩小比率 最小缩小为90% 最大放大为110%
-				if( mDesc <= lastDesc){
-					mScaleXEnlarge += 0.01/2f;
-					mScaleYEnlarge += 0.05/2f;
-					mScaleXReduce -= 0.01/2f;
-					mScaleYReduce -= 0.02/2f;
-				}else{
-					mScaleXEnlarge -= 0.01/2f;
-					mScaleYEnlarge -= 0.05/2f;
-					mScaleXReduce += 0.01/2f;
-					mScaleYReduce += 0.02/2f;			
-				}								
+			if(mScaleXEnlarge <  (1+ROTATION_RATIO)){
+				mScaleXEnlarge += ENLARGE_X;
+				mScaleYEnlarge += ENLARGE_Y;
+				mScaleXReduce -= ENLARGE_X;
+				mScaleYReduce -= REDUCE_EDGE_Y;
+
 				// lower medium icon enlarge
-				mLowerMudiumMatrx.setScale(mScaleXEnlarge, (float)(mScaleYEnlarge*1.5),
+				mLowerMudiumMatrx.setScale(mScaleXEnlarge, (float)(mScaleYEnlarge*1.3),
 						mIconLowerMudium.getWidth() / 2,
 						mIconLowerMudium.getHeight() / 2-2*Math.abs(mDesc));
 				mIconLowerMudium.layout(mIconLowerMudium.getLeft(),mIconLowerMudium.getTop()+(int)(mDesc/3.1), 
@@ -419,10 +467,8 @@ public class WheelLayout extends RelativeLayout {
 																		  mIconHigherMudium.getRight(), mIconHigherMudium.getBottom()+mDesc/8);
 				mIconHigherMudium.setImageMatrix(mHigherMudiumMatrix);
 			}else{
-				mIsAddIndex++;
 				addIndex();
 				replaceImage();
-				lastDesc = 0;
 			}
 		}
 	}
@@ -431,6 +477,15 @@ public class WheelLayout extends RelativeLayout {
 	 *  touch 处理完成，替换图片， 并初始化image滑动的位置
 	 */
 	private void replaceImage() {
+		
+		/* 初始化时间控制器 */
+		sum = 0;
+		mStartWheel = false;
+		if (mTask != null) {
+			mTask.cancel();
+			mTask = null;
+		}
+
 		// init enlarge and reduce ratio
 		mScaleX = mScaleXEnlarge = mScaleXReduce= 1;
 		mScaleY = mScaleYEnlarge = mScaleYReduce = 1;
@@ -439,32 +494,27 @@ public class WheelLayout extends RelativeLayout {
 		// init large image position
 		mLargeScaleMatrix = new Matrix();
 		mIconLarge.setImageMatrix(mLargeScaleMatrix);
-		mIconLarge.layout(mIconLarge.getLeft(),
-				mIconLargeTop, mIconLarge.getRight(), mIconLargeBottom);
+		mIconLarge.layout(mIconLarge.getLeft(),mIconLargeTop, mIconLarge.getRight(), mIconLargeBottom);
 
 		// init large image position
 		mHigherSmallMatrix = new Matrix();
 		mIconHigherSmall.setImageMatrix(mHigherSmallMatrix);
-		mIconHigherSmall.layout(mIconHigherSmall.getLeft(),
-				mIconHigherSmallTop, mIconHigherSmall.getRight(), mIconHigherSmallBottom);
+		mIconHigherSmall.layout(mIconHigherSmall.getLeft(),mIconHigherSmallTop, mIconHigherSmall.getRight(), mIconHigherSmallBottom);
 
 		// init higher medium image position
 		mHigherMudiumMatrix = new Matrix();
 		mIconHigherMudium.setImageMatrix(mHigherMudiumMatrix);
-		mIconHigherMudium.layout(mIconHigherMudium.getLeft(),
-				mIconHigherMudiumTop, mIconHigherMudium.getRight(), mIconHigherMudiumBottom);
+		mIconHigherMudium.layout(mIconHigherMudium.getLeft(),mIconHigherMudiumTop, mIconHigherMudium.getRight(), mIconHigherMudiumBottom);
 
 		// init lower medium image position
 		mLowerMudiumMatrx = new Matrix();
 		mIconLowerMudium.setImageMatrix(mLowerMudiumMatrx);
-		mIconLowerMudium.layout(mIconLowerMudium.getLeft(),
-				mIconLowerMudiumTop, mIconLowerMudium.getRight(), mIconLowerMudiumBottom);
+		mIconLowerMudium.layout(mIconLowerMudium.getLeft(),mIconLowerMudiumTop, mIconLowerMudium.getRight(), mIconLowerMudiumBottom);
 
 		// init lower small image position
 		mLowerSmallMatrix = new Matrix();
 		mIconLowerSmall.setImageMatrix(mLowerSmallMatrix);
-		mIconLowerSmall.layout(mIconLowerSmall.getLeft(),
-				mIconLowerSmallTop, mIconLowerSmall.getRight(), mIconLowerSmallBottom);
+		mIconLowerSmall.layout(mIconLowerSmall.getLeft(),mIconLowerSmallTop, mIconLowerSmall.getRight(), mIconLowerSmallBottom);
 
 		// replace image
 		mIconDesc.setText(mIconDescs[mLargeIndex]);
@@ -606,18 +656,15 @@ public class WheelLayout extends RelativeLayout {
 	}
 
 	private void wechatIconClicked() {
-		// TODO Auto-generated method stub
 		Toast.makeText(mContext, "wechat icon clicked", Toast.LENGTH_SHORT)
 				.show();
 	}
 
 	private void mapIconClicked() {
-		// TODO Auto-generated method stub
-		Toast.makeText(mContext, "map icon clicked", Toast.LENGTH_SHORT).show();
+				Toast.makeText(mContext, "map icon clicked", Toast.LENGTH_SHORT).show();
 	}
 
 	private void callIconClicked() {
-		// TODO Auto-generated method stub
 		Toast.makeText(mContext, "call icon clicked", Toast.LENGTH_SHORT)
 				.show();
 	}
@@ -652,5 +699,17 @@ public class WheelLayout extends RelativeLayout {
 		mLowerMudiumIndex = (mLowerMudiumIndex + 1) % 5;
 		mLowerSmallIndex = (mLowerSmallIndex + 1) % 5;
 	}
+	
+	class MyTimerTask extends TimerTask {
+		Handler handler;
 
+		public MyTimerTask(Handler handler) {
+			this.handler = handler;
+		}
+
+		@Override
+		public void run() {
+			handler.sendMessage(handler.obtainMessage());
+		}
+	}
 }
