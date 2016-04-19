@@ -25,7 +25,6 @@ public class WheelLayout extends RelativeLayout {
 	private Context mContext;
 	private TextView mIconDesc;
 	// Scrolling
-	private RelativeLayout c;
 	private WheelScroller scroller;
 	private boolean isScrollingPerformed;
 	private int scrollingOffset = 0;
@@ -110,13 +109,13 @@ public class WheelLayout extends RelativeLayout {
 	Matrix mHigherMudiumMatrix = new Matrix();
 	Matrix mLowerMudiumMatrx = new Matrix();
 	Matrix mLowerSmallMatrix = new Matrix();
-	float mScaleX = 1;
-	float mScaleY = 1;
-	float mScaleXEnlarge = 1;
-	float mScaleYEnlarge = 1;
-	float mScaleXReduce = 1;
-	float mScaleYReduce = 1;
-	int mDesc = 0;
+	private float mScaleX = 1;
+	private float mScaleY = 1;
+	private float mScaleXEnlarge = 1;
+	private float mScaleYEnlarge = 1;
+	private float mScaleXReduce = 1;
+	private float mScaleYReduce = 1;
+	private int mDesc = 0;
 	
 	private final int MAX_FING_BOUND = 60;
 
@@ -133,11 +132,12 @@ public class WheelLayout extends RelativeLayout {
 	}
 
 	private void initView(Context context) {
-		// TODO Auto-generated method stub
+
 		if (layout == null) {
 			LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 			layout = (RelativeLayout) inflater.inflate(R.layout.c_mode_layout,this);
 		}
+
 		mIconDesc = (TextView) findViewById(R.id.icon_desc);
 		mIconHigherSmall = (ImageView) layout.findViewById(R.id.icon_higher_small);
 		mIconHigherMudium = (ImageView) layout.findViewById(R.id.icon_higher_medium);
@@ -158,14 +158,15 @@ public class WheelLayout extends RelativeLayout {
 		public void onStarted() {
 			isScrollingPerformed = true;
 			mIsAddIndex = 0;
-			mIsSubIndex = 0;
 		}
 
 		public void onScroll(int distance) {
 			scrollingOffset += distance;
+
 			// abandon fing scroll
-			if(Math.abs(distance) < MAX_FING_BOUND)
+			if(Math.abs(distance) < MAX_FING_BOUND){
 				rotateImage(distance) ;
+			}
 			
 			int height = 10;
 			if (scrollingOffset > height) {
@@ -183,7 +184,7 @@ public class WheelLayout extends RelativeLayout {
 			if (isScrollingPerformed) {
 				isScrollingPerformed = false;
 			}
-			// slid finish to replace image
+			// slide finish to replace image
 			if (mIsAddIndex == 0 && mode == 0) {
 				addIndex();
 			}else if(mIsAddIndex == 0 && mode == 1){
@@ -203,10 +204,8 @@ public class WheelLayout extends RelativeLayout {
 	private int mDownX;
 	private int mDownY;
 	private int mIsAddIndex = 0;
-	private int mIsSubIndex = 0;
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		// TODO Auto-generated method stub
 		switch (event.getAction()) {
 			case MotionEvent.ACTION_DOWN:
 				mDownX = (int) event.getX();
@@ -283,35 +282,197 @@ public class WheelLayout extends RelativeLayout {
 		});
 	}
 
-	private void subIndex() {
-		if (mLargeIndex == 0) {
-			mLargeIndex = 5;
-		}
-		if (mHigherMudiumIndex == 0) {
-			mHigherMudiumIndex = 5;
-		} 
-		if (mHigherSmallIndex == 0) {
-			mHigherSmallIndex = 5;
-		}
-		if (mLowerMudiumIndex == 0) {
-			mLowerMudiumIndex = 5;
-		} 
-		if (mLowerSmallIndex == 0) {
-			mLowerSmallIndex = 5;
-		}
-		mLargeIndex = (mLargeIndex - 1) % 5;
-		mHigherMudiumIndex = (mHigherMudiumIndex - 1) % 5;
-		mHigherSmallIndex = (mHigherSmallIndex - 1) % 5;
-		mLowerMudiumIndex = (mLowerMudiumIndex - 1) % 5;
-		mLowerSmallIndex = (mLowerSmallIndex - 1) % 5;
+	/**
+	 *  set icon home position
+	 */
+	private void setIconOriginPositon(){
+		mIconLargeTop = mIconLarge.getTop();
+		mIconLargeBottom = mIconLarge.getBottom();
+		mIconLargeBottom = mIconLarge.getBottom();
+		mIconHigherSmallTop = mIconHigherSmall.getTop();
+		mIconHigherSmallBottom = mIconHigherSmall.getBottom();
+		mIconHigherMudiumTop = mIconHigherMudium.getTop();
+		mIconHigherMudiumBottom = mIconHigherMudium.getBottom();
+		mIconLowerMudiumTop= mIconLowerMudium.getTop();
+		mIconLowerMudiumBottom = mIconLowerMudium.getBottom();
+		mIconLowerSmallTop = mIconLowerSmall.getTop();
+		mIconLowerSmallBottom = mIconLowerSmall.getBottom();
 	}
 
-	private void addIndex() {
-		mLargeIndex = (mLargeIndex + 1) % 5;
-		mHigherMudiumIndex = (mHigherMudiumIndex + 1) % 5;
-		mHigherSmallIndex = (mHigherSmallIndex + 1) % 5;
-		mLowerMudiumIndex = (mLowerMudiumIndex + 1) % 5;
-		mLowerSmallIndex = (mLowerSmallIndex + 1) % 5;
+	/**
+	 * wheel image
+	 */
+	int lastDesc = 0;
+	private void rotateImage(int move) {
+		if(move > 0){
+			mDesc +=1;	//向下滑动
+		}else{
+			mDesc -= 1;	//向上滑动
+		}
+		Log.d("zhangyi","mDesc is:"+mDesc+" move is:"+move+"    lastDesc is:"+lastDesc);
+		if(mScaleX > 0.83f){
+			// 设置放大 缩小比率 最小缩小为90%
+			mScaleX -= 0.01/2f;
+			mScaleY -= 0.035/2f;
+			//large icon reduce
+			mLargeScaleMatrix.setScale((float)(mScaleX*0.9), mScaleY,
+																	mIconLarge.getWidth() / 2,
+																	mIconLarge.getHeight() / 2);
+
+				mIconLarge.layout(mIconLarge.getLeft(),
+														mIconLarge.getTop()+mDesc/4,
+														mIconLarge.getRight(),
+														mIconLarge.getBottom()+mDesc/4);
+			mIconLarge.setImageMatrix(mLargeScaleMatrix);
+		}
+
+		if(move > 0){
+			// 向下滑动
+			if(mScaleXEnlarge < 1.17f){
+				// 设置放大 缩小比率 最小缩小为90% 最大放大为110%
+					mScaleXEnlarge += 0.01/2f;
+					mScaleYEnlarge += 0.05/2f;
+					mScaleXReduce -= 0.01/2f;
+					mScaleYReduce -= 0.02/2f;
+					lastDesc = mDesc;
+
+				// higher small icon enlarge
+				mHigherSmallMatrix.setScale(mScaleXEnlarge, mScaleYEnlarge,
+						mIconHigherSmall.getWidth() / 2,
+						mIconHigherSmall.getHeight() / 2);
+				mIconHigherSmall.layout(mIconHigherSmall.getLeft(),mIconHigherSmall.getTop()+mDesc/8, 
+																	mIconHigherSmall.getRight(), mIconHigherSmall.getBottom()+mDesc/8);
+				mIconHigherSmall.setImageMatrix(mHigherSmallMatrix);
+
+				// higher medium icon enlarge
+				mHigherMudiumMatrix.setScale(mScaleXEnlarge, (float)(mScaleYEnlarge*1.5),
+																				 mIconHigherMudium.getWidth() / 2,
+																				 mIconHigherMudium.getHeight() / 2-Math.abs(mDesc));
+				mIconHigherMudium.layout(mIconHigherMudium.getLeft(),mIconHigherMudium.getTop()+(int)(mDesc/4.5), 
+																		  mIconHigherMudium.getRight(), mIconHigherMudium.getBottom()+(int)(mDesc/3));
+				mIconHigherMudium.setImageMatrix(mHigherMudiumMatrix);
+
+				//lower small icon reduce
+				mLowerSmallMatrix.setScale(mScaleXReduce, mScaleYReduce,
+																		  mIconLowerSmall.getWidth() / 2,
+																		  mIconLowerSmall.getHeight() / 2);
+				mIconLowerSmall.layout(mIconLowerSmall.getLeft(),mIconLowerSmall.getTop()+mDesc/8, 
+						mIconLowerSmall.getRight(), mIconLowerSmall.getBottom()+mDesc/8);
+				mIconLowerSmall.setImageMatrix(mLowerSmallMatrix);
+				
+				//lower medium icon reduce
+				mLowerMudiumMatrx.setScale(mScaleXReduce, mScaleYReduce,
+																				mIconLowerMudium.getWidth() / 2,
+																				mIconLowerMudium.getHeight() / 2);
+				mIconLowerMudium.layout(mIconLowerMudium.getLeft(),mIconLowerMudium.getTop()+mDesc/8,
+																		  mIconLowerMudium.getRight(), mIconLowerMudium.getBottom()+mDesc/8);
+				mIconLowerMudium.setImageMatrix(mLowerMudiumMatrx);
+			}else{
+				mIsAddIndex--;
+				subIndex();
+				replaceImage();
+			}
+		}else{
+			// 向上滑动
+			if(mScaleXEnlarge < 1.17f){
+				// 设置放大 缩小比率 最小缩小为90% 最大放大为110%
+				if( mDesc <= lastDesc){
+					mScaleXEnlarge += 0.01/2f;
+					mScaleYEnlarge += 0.05/2f;
+					mScaleXReduce -= 0.01/2f;
+					mScaleYReduce -= 0.02/2f;
+				}else{
+					mScaleXEnlarge -= 0.01/2f;
+					mScaleYEnlarge -= 0.05/2f;
+					mScaleXReduce += 0.01/2f;
+					mScaleYReduce += 0.02/2f;			
+				}								
+				// lower medium icon enlarge
+				mLowerMudiumMatrx.setScale(mScaleXEnlarge, (float)(mScaleYEnlarge*1.5),
+						mIconLowerMudium.getWidth() / 2,
+						mIconLowerMudium.getHeight() / 2-2*Math.abs(mDesc));
+				mIconLowerMudium.layout(mIconLowerMudium.getLeft(),mIconLowerMudium.getTop()+(int)(mDesc/3.1), 
+																		  mIconLowerMudium.getRight(), mIconLowerMudium.getBottom()+(mDesc/4));
+				mIconLowerMudium.setImageMatrix(mLowerMudiumMatrx);
+
+				//lower small icon enlarge
+				mLowerSmallMatrix.setScale(mScaleXEnlarge, mScaleYEnlarge,
+						mIconHigherSmall.getWidth() / 2,
+						mIconHigherSmall.getHeight() / 2);
+				mIconLowerSmall.layout(mIconLowerSmall.getLeft(),mIconLowerSmall.getTop()+mDesc/8, 
+																   mIconLowerSmall.getRight(), mIconLowerSmall.getBottom()+mDesc/8);
+				mIconLowerSmall.setImageMatrix(mLowerSmallMatrix);
+
+				//higher small icon reduce
+				mHigherSmallMatrix.setScale(mScaleXReduce, mScaleYReduce,
+						mIconHigherSmall.getWidth() / 2,
+						mIconHigherSmall.getHeight() / 2);
+				mIconHigherSmall.layout(mIconHigherSmall.getLeft(),mIconHigherSmall.getTop()+mDesc/8, 
+																	mIconHigherSmall.getRight(), mIconHigherSmall.getBottom()+mDesc/8);
+				mIconHigherSmall.setImageMatrix(mHigherSmallMatrix);	
+
+				//higher medium icon reduce
+				mHigherMudiumMatrix.setScale(mScaleXReduce, mScaleYReduce,
+						mIconHigherMudium.getWidth() / 2,
+						mIconHigherMudium.getHeight() / 2);
+				mIconHigherMudium.layout(mIconHigherMudium.getLeft(),mIconHigherMudium.getTop()+mDesc/8, 
+																		  mIconHigherMudium.getRight(), mIconHigherMudium.getBottom()+mDesc/8);
+				mIconHigherMudium.setImageMatrix(mHigherMudiumMatrix);
+			}else{
+				mIsAddIndex++;
+				addIndex();
+				replaceImage();
+				lastDesc = 0;
+			}
+		}
+	}
+
+	/**
+	 *  touch 处理完成，替换图片， 并初始化image滑动的位置
+	 */
+	private void replaceImage() {
+		// init enlarge and reduce ratio
+		mScaleX = mScaleXEnlarge = mScaleXReduce= 1;
+		mScaleY = mScaleYEnlarge = mScaleYReduce = 1;
+		mDesc = 0;
+
+		// init large image position
+		mLargeScaleMatrix = new Matrix();
+		mIconLarge.setImageMatrix(mLargeScaleMatrix);
+		mIconLarge.layout(mIconLarge.getLeft(),
+				mIconLargeTop, mIconLarge.getRight(), mIconLargeBottom);
+
+		// init large image position
+		mHigherSmallMatrix = new Matrix();
+		mIconHigherSmall.setImageMatrix(mHigherSmallMatrix);
+		mIconHigherSmall.layout(mIconHigherSmall.getLeft(),
+				mIconHigherSmallTop, mIconHigherSmall.getRight(), mIconHigherSmallBottom);
+
+		// init higher medium image position
+		mHigherMudiumMatrix = new Matrix();
+		mIconHigherMudium.setImageMatrix(mHigherMudiumMatrix);
+		mIconHigherMudium.layout(mIconHigherMudium.getLeft(),
+				mIconHigherMudiumTop, mIconHigherMudium.getRight(), mIconHigherMudiumBottom);
+
+		// init lower medium image position
+		mLowerMudiumMatrx = new Matrix();
+		mIconLowerMudium.setImageMatrix(mLowerMudiumMatrx);
+		mIconLowerMudium.layout(mIconLowerMudium.getLeft(),
+				mIconLowerMudiumTop, mIconLowerMudium.getRight(), mIconLowerMudiumBottom);
+
+		// init lower small image position
+		mLowerSmallMatrix = new Matrix();
+		mIconLowerSmall.setImageMatrix(mLowerSmallMatrix);
+		mIconLowerSmall.layout(mIconLowerSmall.getLeft(),
+				mIconLowerSmallTop, mIconLowerSmall.getRight(), mIconLowerSmallBottom);
+
+		// replace image
+		mIconDesc.setText(mIconDescs[mLargeIndex]);
+		mIconLarge.setImageResource(flags[mLargeIndex]);
+		mIconHigherSmall.setImageResource(flags1[mHigherSmallIndex]);
+		mIconHigherMudium.setImageResource(flags4[mHigherMudiumIndex]);
+		mIconLowerSmall.setImageResource(flags3[mLowerSmallIndex]);
+		mIconLowerMudium.setImageResource(flags4[mLowerMudiumIndex]);
 	}
 
 	public void onIconClick(int what) {
@@ -461,191 +622,35 @@ public class WheelLayout extends RelativeLayout {
 				.show();
 	}
 
-	/**
-	 *  set icon home position
-	 */
-	private void setIconOriginPositon(){
-		mIconLargeTop = mIconLarge.getTop();
-		mIconLargeBottom = mIconLarge.getBottom();
-		mIconLargeBottom = mIconLarge.getBottom();
-		mIconHigherSmallTop = mIconHigherSmall.getTop();
-		mIconHigherSmallBottom = mIconHigherSmall.getBottom();
-		mIconHigherMudiumTop = mIconHigherMudium.getTop();
-		mIconHigherMudiumBottom = mIconHigherMudium.getBottom();
-		mIconLowerMudiumTop= mIconLowerMudium.getTop();
-		mIconLowerMudiumBottom = mIconLowerMudium.getBottom();
-		mIconLowerSmallTop = mIconLowerSmall.getTop();
-		mIconLowerSmallBottom = mIconLowerSmall.getBottom();
+	private void subIndex() {
+		if (mLargeIndex == 0) {
+			mLargeIndex = 5;
+		}
+		if (mHigherMudiumIndex == 0) {
+			mHigherMudiumIndex = 5;
+		} 
+		if (mHigherSmallIndex == 0) {
+			mHigherSmallIndex = 5;
+		}
+		if (mLowerMudiumIndex == 0) {
+			mLowerMudiumIndex = 5;
+		} 
+		if (mLowerSmallIndex == 0) {
+			mLowerSmallIndex = 5;
+		}
+		mLargeIndex = (mLargeIndex - 1) % 5;
+		mHigherMudiumIndex = (mHigherMudiumIndex - 1) % 5;
+		mHigherSmallIndex = (mHigherSmallIndex - 1) % 5;
+		mLowerMudiumIndex = (mLowerMudiumIndex - 1) % 5;
+		mLowerSmallIndex = (mLowerSmallIndex - 1) % 5;
 	}
 
-	/**
-	 * rotate image
-	 */
-	@SuppressLint("NewApi")
-	private void rotateImage(int move) {
-		if(move > 0){
-			mDesc +=1;	//向下滑动
-		}else{
-			mDesc -= 1;	//向上滑动
-		}
-
-		if(mScaleX > 0.84f){
-			// 设置放大 缩小比率 最小缩小为90%
-			mScaleX -= 0.01/2f;
-			mScaleY -= 0.03/2f;
-			//large icon reduce
-			mLargeScaleMatrix.setScale(mScaleX, mScaleY,
-					mIconLarge.getWidth() / 2,
-					mIconLarge.getHeight() / 2);
-			if(move < 0){
-				mIconLarge.layout(mIconLarge.getLeft(),
-						mIconLarge.getTop()+mDesc/3, mIconLarge.getRight(), mIconLarge.getBottom()+mDesc/3);
-			}else{
-				mIconLarge.layout(mIconLarge.getLeft(),
-						mIconLarge.getTop()+mDesc/4, mIconLarge.getRight(), mIconLarge.getBottom()+mDesc/4);
-			}
-			mIconLarge.setImageMatrix(mLargeScaleMatrix);
-		}
-
-		if(move > 0){
-			// 向下滑动
-			if(mScaleXEnlarge < 1.16f){
-				// 设置放大 缩小比率 最小缩小为90% 最大放大为110%
-				mScaleXEnlarge += 0.01/2f;
-				mScaleYEnlarge += 0.05/2f;
-				mScaleXReduce -= 0.01/2f;
-				mScaleYReduce -= 0.02/2f;
-
-				// higher small icon enlarge
-				mHigherSmallMatrix.setScale(mScaleXEnlarge, mScaleYEnlarge,
-						mIconHigherSmall.getWidth() / 2,
-						mIconHigherSmall.getHeight() / 2);
-				mIconHigherSmall.layout(mIconHigherSmall.getLeft(),mIconHigherSmall.getTop()+mDesc/6, 
-																	mIconHigherSmall.getRight(), mIconHigherSmall.getBottom()+mDesc/6);
-				mIconHigherSmall.setImageMatrix(mHigherSmallMatrix);
-
-				// higher mudium icon enlarge
-				mHigherMudiumMatrix.setScale(mScaleXEnlarge, mScaleYEnlarge,
-						mIconHigherMudium.getWidth() / 2,
-						mIconHigherMudium.getHeight() / 2);
-				mIconHigherMudium.layout(mIconHigherMudium.getLeft(),mIconHigherMudium.getTop()+mDesc/4, 
-																		  mIconHigherMudium.getRight(), mIconHigherMudium.getBottom()+mDesc/3);
-				mIconHigherMudium.setImageMatrix(mHigherMudiumMatrix);
-
-				//lower small icon reduce
-				mLowerSmallMatrix.setScale(mScaleXReduce, mScaleYReduce,
-						mIconLowerSmall.getWidth() / 2,
-						mIconLowerSmall.getHeight() / 2);
-				mIconLowerSmall.layout(mIconLowerSmall.getLeft(),mIconLowerSmall.getTop()+mDesc/6, 
-						mIconLowerSmall.getRight(), mIconLowerSmall.getBottom()+mDesc/6);
-				mIconLowerSmall.setImageMatrix(mLowerSmallMatrix);
-				
-				//lower mudium icon reduce
-				mLowerMudiumMatrx.setScale(mScaleXReduce, mScaleYReduce,
-						mIconLowerMudium.getWidth() / 2,
-						mIconLowerMudium.getHeight() / 2);
-				mIconLowerMudium.layout(mIconLowerMudium.getLeft(),mIconLowerMudium.getTop()+mDesc/6, 
-																		  mIconLowerMudium.getRight(), mIconLowerMudium.getBottom()+mDesc/6);
-				mIconLowerMudium.setImageMatrix(mLowerMudiumMatrx);
-			}else{
-				mIsAddIndex--;
-				subIndex();
-				replaceImage();
-			}
-		}else{
-			// 向上滑动
-			if(mScaleXEnlarge < 1.16f){
-				// 设置放大 缩小比率 最小缩小为90% 最大放大为110%
-				mScaleXEnlarge += 0.01/2f;
-				mScaleYEnlarge += 0.05/2f;
-				mScaleXReduce -= 0.01/2f;
-				mScaleYReduce -= 0.02/2f;
-								
-				// lower medium icon enlarge
-				mLowerMudiumMatrx.setScale(mScaleXEnlarge, mScaleYEnlarge,
-						mIconLowerMudium.getWidth() / 2,
-						mIconLowerMudium.getHeight() / 2);
-				mIconLowerMudium.layout(mIconLowerMudium.getLeft(),mIconLowerMudium.getTop()+(int)(mDesc/3), 
-																		mIconLowerMudium.getRight(), mIconLowerMudium.getBottom()+(int)(mDesc/4));
-				mIconLowerMudium.setImageMatrix(mLowerMudiumMatrx);
-
-				//lower small icon enlarge
-				mLowerSmallMatrix.setScale(mScaleXEnlarge, mScaleYEnlarge,
-						mIconHigherSmall.getWidth() / 2,
-						mIconHigherSmall.getHeight() / 2);
-				mIconLowerSmall.layout(mIconLowerSmall.getLeft(),mIconLowerSmall.getTop()+mDesc/6, 
-																   mIconLowerSmall.getRight(), mIconLowerSmall.getBottom()+mDesc/6);
-				mIconLowerSmall.setImageMatrix(mLowerSmallMatrix);
-
-				//higher small icon reduce
-				mHigherSmallMatrix.setScale(mScaleXReduce, mScaleYReduce,
-						mIconHigherSmall.getWidth() / 2,
-						mIconHigherSmall.getHeight() / 2);
-				mIconHigherSmall.layout(mIconHigherSmall.getLeft(),mIconHigherSmall.getTop()+mDesc/6, 
-																	mIconHigherSmall.getRight(), mIconHigherSmall.getBottom()+mDesc/6);
-				mIconHigherSmall.setImageMatrix(mHigherSmallMatrix);	
-
-				//higher medium icon reduce
-				mHigherMudiumMatrix.setScale(mScaleXReduce, mScaleYReduce,
-						mIconHigherMudium.getWidth() / 2,
-						mIconHigherMudium.getHeight() / 2);
-				mIconHigherMudium.layout(mIconHigherMudium.getLeft(),mIconHigherMudium.getTop()+mDesc/6, 
-																		  mIconHigherMudium.getRight(), mIconHigherMudium.getBottom()+mDesc/6);
-				mIconHigherMudium.setImageMatrix(mHigherMudiumMatrix);
-			}else{
-				mIsAddIndex++;
-				addIndex();
-				replaceImage();
-			}
-		}
-	}
-
-	/**
-	 *  touch 处理完成，替换图片， 并初始化image滑动的位置
-	 */
-	private void replaceImage() {
-		// init enlarge and reduce ratio
-		mScaleX = mScaleXEnlarge = mScaleXReduce= 1;
-		mScaleY =mScaleYEnlarge= mScaleYReduce = 1;
-		mDesc = 0;
-
-		// init large image position
-		mLargeScaleMatrix = new Matrix();
-		mIconLarge.setImageMatrix(mLargeScaleMatrix);
-		mIconLarge.layout(mIconLarge.getLeft(),
-				mIconLargeTop, mIconLarge.getRight(), mIconLargeBottom);
-
-		// init large image position
-		mHigherSmallMatrix = new Matrix();
-		mIconHigherSmall.setImageMatrix(mHigherSmallMatrix);
-		mIconHigherSmall.layout(mIconHigherSmall.getLeft(),
-				mIconHigherSmallTop, mIconHigherSmall.getRight(), mIconHigherSmallBottom);
-
-		// init higher mudium image position
-		mHigherMudiumMatrix = new Matrix();
-		mIconHigherMudium.setImageMatrix(mHigherMudiumMatrix);
-		mIconHigherMudium.layout(mIconHigherMudium.getLeft(),
-				mIconHigherMudiumTop, mIconHigherMudium.getRight(), mIconHigherMudiumBottom);
-
-		// init lower mudium image position
-		mLowerMudiumMatrx = new Matrix();
-		mIconLowerMudium.setImageMatrix(mLowerMudiumMatrx);
-		mIconLowerMudium.layout(mIconLowerMudium.getLeft(),
-				mIconLowerMudiumTop, mIconLowerMudium.getRight(), mIconLowerMudiumBottom);
-
-		// init lower small image position
-		mLowerSmallMatrix = new Matrix();
-		mIconLowerSmall.setImageMatrix(mLowerSmallMatrix);
-		mIconLowerSmall.layout(mIconLowerSmall.getLeft(),
-				mIconLowerSmallTop, mIconLowerSmall.getRight(), mIconLowerSmallBottom);
-
-		// replace image
-		mIconLarge.setImageResource(flags[mLargeIndex]);
-		mIconDesc.setText(mIconDescs[mLargeIndex]);
-		mIconHigherSmall.setImageResource(flags1[mHigherSmallIndex]);
-		mIconHigherMudium.setImageResource(flags4[mHigherMudiumIndex]);
-		mIconLowerSmall.setImageResource(flags3[mLowerSmallIndex]);
-		mIconLowerMudium.setImageResource(flags4[mLowerMudiumIndex]);
+	private void addIndex() {
+		mLargeIndex = (mLargeIndex + 1) % 5;
+		mHigherMudiumIndex = (mHigherMudiumIndex + 1) % 5;
+		mHigherSmallIndex = (mHigherSmallIndex + 1) % 5;
+		mLowerMudiumIndex = (mLowerMudiumIndex + 1) % 5;
+		mLowerSmallIndex = (mLowerSmallIndex + 1) % 5;
 	}
 
 }
