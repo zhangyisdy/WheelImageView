@@ -3,18 +3,10 @@ package com.example.c_mode_launcher;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
-import android.animation.ValueAnimator.AnimatorUpdateListener;
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.Camera;
-import android.graphics.Canvas;
 import android.graphics.Matrix;
-import android.graphics.Paint;
 import android.os.Handler;
-import android.text.format.Time;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -95,7 +87,7 @@ public class WheelLayout extends RelativeLayout {
 			R.drawable.c_mode_photo_lower_medium };
 
 	private RelativeLayout layout;
-	
+
 	// icon home position
 	private int mIconLargeTop;
 	private int mIconLargeBottom;
@@ -193,7 +185,7 @@ public class WheelLayout extends RelativeLayout {
 
 		public void onScroll(int distance) {
 			scrollingOffset += distance;
-
+			Log.d("zhangyi","distance is:"+distance);
 			if (Math.abs(distance) < MAX_FING_BOUND && !mTouchUp) {
 				wheelImage(distance);
 			} else if (Math.abs(distance) > MAX_FING_BOUND) {
@@ -213,7 +205,7 @@ public class WheelLayout extends RelativeLayout {
 				}
 			}
 			
-			int height = 10;
+			int height = 60;
 			if (scrollingOffset > height) {
 				scrollingOffset = height;
 				scroller.stopScrolling();
@@ -661,12 +653,11 @@ public class WheelLayout extends RelativeLayout {
 	}
 
 	private void mapIconClicked() {
-				Toast.makeText(mContext, "map icon clicked", Toast.LENGTH_SHORT).show();
+		Toast.makeText(mContext, "map icon clicked", Toast.LENGTH_SHORT).show();
 	}
 
 	private void callIconClicked() {
-		Toast.makeText(mContext, "call icon clicked", Toast.LENGTH_SHORT)
-				.show();
+		Toast.makeText(mContext, "call icon clicked", Toast.LENGTH_SHORT).show();
 	}
 
 	private void subIndex() {
